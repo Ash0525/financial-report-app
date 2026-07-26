@@ -35,3 +35,7 @@ setUp() - creates temporary database and initalize tables
 test - save report, retrieve report, and compare values
 
 tearDown() - restore real database path and delete temporary database
+
+Start the server with: uvicorn main:app --app-dir backend --reload
+
+Go to this website: http://127.0.0.1:8000/health

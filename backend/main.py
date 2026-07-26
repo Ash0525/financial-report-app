@@ -1,46 +1,75 @@
-from schemas import ReportCreate
+import schemas
 import database
+from fastapi import FastAPI, HTTPException
+from contextlib import asynccontextmanager
 
-# Temporary example until the API entry point is implemented.
-if __name__ == "__main__":
-    report = ReportCreate(
-        title="July 2026 Report",
-        reporting_period_start="2026-07-01",
-        reporting_period_end="2026-07-31",
-        income=[
-            {"description": "Salary", "amount": "3000.00"},
-        ],
-        expenses=[
-            {"description": "Rent", "amount": "1250.00"},
-        ],
-    )
-
-    print(report)
-    print(report.model_dump())
-
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     database.initialize_database()
+    yield
 
+app = FastAPI(
+    title="Financial Report API",
+    lifespan=lifespan,
+)
+
+# Registers the function below it as handler for HTTP GET request
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+# Decorator that reports endpoint
+@app.post(
+    "/reports",
+    response_model=schemas.ReportRead,
+    status_code=201,
+)
+def create_report(report: schemas.ReportCreate) -> schemas.ReportRead:
     report_id = database.create_report(report)
-
-    print(f"Saved report with ID {report_id}")
-
     saved_report = database.get_report(report_id)
 
     if saved_report is None:
-        print("Report not found")
-    else:
-        print("Retrieved report:")
-        print(saved_report)
+        raise HTTPException(
+            status_code=500,
+            detail="Report was saved but could not be retrieved",
+        )
+    
+    return saved_report
 
-    report_summaries = database.list_reports()
+# Decorator to get reports
+@app.get(
+    "/reports",
+    response_model=list[schemas.ReportSummary],
+)
+def list_reports() -> list[schemas.ReportSummary]:
+    return database.list_reports()
 
-    print("All reports:")
-    for summary in report_summaries:
-        print(summary)
+# Decorator to get report id
+@app.get(
+    "/reports/{report_id}",
+    response_model=schemas.ReportRead,
+)
+def get_report(report_id: int) -> schemas.ReportRead:
+    report = database.get_report(report_id)
 
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+    
+    return report
+
+# Decorator to delete through API
+@app.delete(
+    "/reports/{report_id}",
+    status_code=204,
+)
+def delete_report(report_id: int) -> None:
     was_deleted = database.delete_report(report_id)
-    print(f"Deleted: {was_deleted}")
 
-    deleted_report = database.get_report(report_id)
-    print(f"Report after deletion: {deleted_report}")
-
+    if not was_deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
