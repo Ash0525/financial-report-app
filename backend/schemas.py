@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # For a journal entry
@@ -18,3 +18,15 @@ class ReportCreate(BaseModel):
     income: list[LineItem] = Field(default_factory=list)
     expenses: list[LineItem] = Field(default_factory=list)
     notes: str | None = None
+
+    @model_validator(mode="after")
+    def validate_reporting_period(self):
+        # Data check 
+        if self.reporting_period_end < self.reporting_period_start:
+            raise ValueError(
+                "Reporting period end date cannot be before the start date"
+            )
+
+        return self
+
+

@@ -1,5 +1,5 @@
 from schemas import ReportCreate
-
+import database
 
 # Temporary example until the API entry point is implemented.
 if __name__ == "__main__":
@@ -17,3 +17,13 @@ if __name__ == "__main__":
 
     print(report)
     print(report.model_dump())
+
+    database.initialize_database()
+
+    report_id = database.create_report(report)
+
+    print(f"Saved report with ID {report_id}")
+    
+
+
+
