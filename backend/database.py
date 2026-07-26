@@ -173,3 +173,33 @@ def get_report(report_id: int) -> schemas.ReportRead | None:
             notes=report_row["notes"],
             created_at=report_row["created_at"],
         )
+
+# Get summary list report
+def list_reports() -> list[schemas.ReportSummary]:
+    with get_connection() as connection:
+        report_rows = connection.execute( 
+            """
+            SELECT
+                id,
+                title,
+                reporting_period_start,
+                reporting_period_end,
+                created_at
+            FROM reports
+            ORDER BY created_at DESC, id DESC
+            """
+        ).fetchall()
+
+        reports = []
+
+        for row in report_rows:
+            report = schemas.ReportSummary(
+                id=row["id"],
+                title=row["title"],
+                reporting_period_start=row["reporting_period_start"],
+                reporting_period_end=row["reporting_period_end"],
+                created_at=row["created_at"],
+            )
+            reports.append(report)
+        
+        return reports

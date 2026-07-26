@@ -32,5 +32,9 @@ if __name__ == "__main__":
         print("Retrieved report:")
         print(saved_report)
 
+    report_summaries = database.list_reports()
 
+    print("All reports:")
+    for summary in report_summaries:
+        print(summary)
 

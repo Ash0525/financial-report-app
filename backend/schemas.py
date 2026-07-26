@@ -38,3 +38,11 @@ class ReportRead(ReportCreate):
     # Get the date time
     created_at: datetime
 
+class ReportSummary(BaseModel):
+    id: int
+    title: str
+    reporting_period_start: date
+    reporting_period_end: date
+    created_at: datetime
+
+
