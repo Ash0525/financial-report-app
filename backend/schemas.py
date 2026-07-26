@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, Field, model_validator
@@ -29,4 +29,12 @@ class ReportCreate(BaseModel):
 
         return self
 
+
+# Object for reading the report
+class ReportRead(ReportCreate):
+    # ID is an integer
+    id: int
+
+    # Get the date time
+    created_at: datetime
 

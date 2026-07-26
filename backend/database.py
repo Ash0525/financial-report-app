@@ -104,3 +104,72 @@ def create_report(report: schemas.ReportCreate) -> int:
         
         print(line_items)
         return report_id
+    
+# Use get_report to access the ReportRead
+def get_report(report_id: int) -> schemas.ReportRead | None:
+
+    # Get the connection with the SQL table
+    with get_connection() as connection:
+
+        # Get the report_row from the SQL table
+        report_row = connection.execute(
+            """
+            SELECT
+                id,
+                title,
+                reporting_period_start,
+                reporting_period_end,
+                notes,
+                created_at
+            FROM reports
+            WHERE id = ?
+            """,
+            (report_id,),
+        ).fetchone()
+
+        # If the report_row doesn't work
+        if report_row is None:
+            print("[error] report_row doesn't exist")
+            return None
+
+        # Get the item_rows from the SQL table
+        item_rows = connection.execute(
+            """
+            SELECT
+                item_type,
+                description,
+                amount
+            FROM line_items
+            WHERE report_id = ?
+            ORDER BY id
+            """,
+            (report_id,),
+        ).fetchall()
+
+        # Initialize income and expenses lists
+        income = []
+        expenses = []
+
+        # Iterate through item_rows, get each line_item
+        for item_row in item_rows:
+            line_item = {
+                "description": item_row["description"],
+                "amount": item_row["amount"],
+            }
+            
+            # Separate the income from the expenses
+            if item_row["item_type"] == "income":
+                income.append(line_item)
+            else:
+                expenses.append(line_item)
+
+        return schemas.ReportRead(
+            id=report_row["id"],
+            title=report_row["title"],
+            reporting_period_start=report_row["reporting_period_start"],
+            reporting_period_end=report_row["reporting_period_end"],
+            income=income,
+            expenses=expenses,
+            notes=report_row["notes"],
+            created_at=report_row["created_at"],
+        )

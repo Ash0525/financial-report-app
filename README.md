@@ -25,4 +25,5 @@ get_connection() - establishes a connection to sqlite3
 initialize_database() - initialize the database. report_id: connects each line item to its report. item_type: says whether it is income or an expense. CHECK: prevents invalid values like "other". 
 
 LineItem object - has a description (str) and an amount (Decimal)
+
 create_report() - 

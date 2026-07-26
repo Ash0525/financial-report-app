@@ -23,7 +23,14 @@ if __name__ == "__main__":
     report_id = database.create_report(report)
 
     print(f"Saved report with ID {report_id}")
-    
+
+    saved_report = database.get_report(report_id)
+
+    if saved_report is None:
+        print("Report not found")
+    else:
+        print("Retrieved report:")
+        print(saved_report)
 
 
 
