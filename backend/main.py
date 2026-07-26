@@ -1,8 +1,12 @@
 from contextlib import asynccontextmanager
-
-from fastapi import FastAPI, HTTPException
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, StaticFiles
 
 from . import database, schemas
+
+FRONTEND_DIRECTORY = (
+    Path(__file__).resolve().parent.parent / "frontend"
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -74,3 +78,13 @@ def delete_report(report_id: int) -> None:
             status_code=404,
             detail="Report not found",
         )
+
+# Route every API rout
+app.mount(
+    "/",
+    StaticFiles(
+        directory=FRONTEND_DIRECTORY,
+        html=True,
+    ),
+    name="frontend",
+)
