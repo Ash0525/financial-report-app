@@ -38,3 +38,9 @@ if __name__ == "__main__":
     for summary in report_summaries:
         print(summary)
 
+    was_deleted = database.delete_report(report_id)
+    print(f"Deleted: {was_deleted}")
+
+    deleted_report = database.get_report(report_id)
+    print(f"Report after deletion: {deleted_report}")
+

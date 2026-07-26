@@ -203,3 +203,17 @@ def list_reports() -> list[schemas.ReportSummary]:
             reports.append(report)
         
         return reports
+    
+# Delete the report
+def delete_report(report_id: int) -> bool:
+    with get_connection() as connection:
+        cursor = connection.execute(
+            """
+            DELETE FROM reports
+            WHERE id = ?
+            """,
+            (report_id,),
+        )
+
+        was_deleted = cursor.rowcount > 0
+        return was_deleted
