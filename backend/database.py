@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
-import schemas
+
+from . import schemas
 
 DATABASE_PATH = Path(__file__).with_name("reports.db")
 

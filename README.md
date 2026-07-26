@@ -8,11 +8,14 @@ Activate the project's virtual environment and run the backend:
 
 ```bash
 source .venv/bin/activate
-python backend/main.py
+python -m uvicorn backend.main:app --reload
 ```
 
-You can also open `backend/main.py` and use VS Code's **Run Python File**
-button.
+Run all automated tests from the project root:
+
+```bash
+python -m unittest discover -s backend/tests
+```
 
 schemas.py - financial report schema
 database.py - create and initialize the SQLite tables
@@ -36,6 +39,6 @@ test - save report, retrieve report, and compare values
 
 tearDown() - restore real database path and delete temporary database
 
-Start the server with: uvicorn main:app --app-dir backend --reload
+Start the server with: python -m uvicorn backend.main:app --reload
 
 Go to this website: http://127.0.0.1:8000/health

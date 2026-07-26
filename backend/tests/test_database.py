@@ -2,8 +2,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import database
-from schemas import ReportCreate
+from backend import database
+from backend.schemas import ReportCreate
 
 
 class DatabaseTests(unittest.TestCase):

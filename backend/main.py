@@ -1,7 +1,8 @@
-import schemas
-import database
-from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException
+
+from . import database, schemas
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
