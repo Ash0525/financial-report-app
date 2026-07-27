@@ -47,16 +47,54 @@ async function loadReports() {
 
         // For every report in the list of report
         for (const report of reports) {
-
-            // Create list of items
             const listItem = document.createElement("li");
 
-            // Append report values
-            listItem.textContent =
+            const reportText = document.createElement("span");
+            reportText.textContent =
                 `${report.title}: ` +
                 `${report.reporting_period_start} to ` +
                 `${report.reporting_period_end}`;
-            
+
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.textContent = "Delete";
+
+            deleteButton.addEventListener("click", async () => {
+                const shouldDelete = window.confirm(
+                    `Delete “${report.title}”?`
+                );
+
+                if (!shouldDelete) {
+                    return;
+                }
+
+                deleteButton.disabled = true;
+
+                try {
+                    const response = await fetch(
+                        `/reports/${report.id}`,
+                        {
+                            method: "DELETE",
+                        },
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `Unable to delete report: ${response.status}`
+                        );
+                    }
+
+                    await loadReports();
+                    reportsStatus.textContent =
+                        `Deleted “${report.title}”.`;
+                } catch (error) {
+                    console.error(error);
+                    reportsStatus.textContent = error.message;
+                    deleteButton.disabled = false;
+                }
+            });
+
+            listItem.append(reportText, " ", deleteButton);
             reportsList.append(listItem);
         }
     } catch (error) {

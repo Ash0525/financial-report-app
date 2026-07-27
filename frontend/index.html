@@ -17,6 +17,7 @@
             <ul id="reports-list"></ul>
         </section>
 
+        <!-- Save reports -->
         <section aria-labelledby="create-report-heading">
             <h2 id="create-report-heading">Create a report</h2>
 
@@ -107,8 +108,32 @@
                 <p id="form-status" role="status"></p>
             </form>
         </section>
+
+        <!-- Add details -->
+         <section id="report-details" aria-labelledby="details-title" hidden>
+
+            <h2 id="details-title"></h2>
+            <p id="details-period"></p>
+
+            <h3>Income</h3>
+            <ul id="details-income"></ul>
+            <p id="income-total"></p>
+
+            <h3>Expenses</h3>
+            <ul id="details-expenses"></ul>
+            <p id="expense-total"></p>
+
+            <h3>Notes</h3>
+            <p id="details-notes"></p>
+
+            <button id="close-details" type="button">
+                Close details
+            </button>
+            
+         </section>
+
     </main>
 
-    <script src="/app.js?v=2"></script>
+    <script src="/app.js?v=3"></script>
 </body>
 </html>
