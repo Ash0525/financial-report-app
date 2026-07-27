@@ -1,0 +1,238 @@
+:root {
+    color-scheme: light;
+    font-family:
+        Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+
+    --color-background: hsl(214 47% 97%);
+    --color-surface: hsl(0 0% 100%);
+    --color-text: hsl(215 32% 14%);
+    --color-muted: hsl(215 16% 47%);
+    --color-primary: hsl(221 83% 53%);
+    --color-primary-hover: hsl(224 76% 48%);
+    --color-border: hsl(214 32% 90%);
+    --color-danger: hsl(0 72% 51%);
+    --color-danger-hover: hsl(0 74% 42%);
+    --color-focus: hsl(221 83% 53% / 15%);
+    --shadow-card: 0 12px 32px hsl(222 47% 11% / 8%);
+    --radius-large: 12px;
+    --radius-small: 8px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--color-text);
+    background: var(--color-background);
+}
+
+main {
+    width: min(1100px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 48px 0;
+}
+
+h1 {
+    margin: 0 0 8px;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.1;
+}
+
+h2,
+h3 {
+    margin-top: 0;
+}
+
+p {
+    line-height: 1.6;
+}
+
+section {
+    margin-top: 24px;
+    padding: 24px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-large);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+form {
+    display: grid;
+    gap: 20px;
+}
+
+label {
+    display: grid;
+    gap: 6px;
+    color: var(--color-muted);
+    font-weight: 600;
+}
+
+input,
+textarea,
+button {
+    font: inherit;
+}
+
+input,
+textarea {
+    width: 100%;
+    padding: 10px 12px;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+    background: var(--color-surface);
+}
+
+textarea {
+    resize: vertical;
+}
+
+input:focus,
+textarea:focus,
+button:focus-visible {
+    border-color: var(--color-primary);
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+button {
+    width: fit-content;
+    padding: 10px 16px;
+    border: 0;
+    border-radius: var(--radius-small);
+    color: var(--color-surface);
+    background: var(--color-primary);
+    cursor: pointer;
+}
+
+button:hover {
+    background: var(--color-primary-hover);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+fieldset {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-small);
+}
+
+legend {
+    padding: 0 6px;
+    font-weight: 700;
+}
+
+.line-item {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(120px, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.line-item + .line-item {
+    padding-top: 2px;
+}
+
+.remove-line-item,
+#reports-list li > button:last-child {
+    background: var(--color-danger);
+}
+
+.remove-line-item:hover,
+#reports-list li > button:last-child:hover {
+    background: var(--color-danger-hover);
+}
+
+#reports-status,
+#form-status {
+    min-height: 1.5em;
+    margin-bottom: 0;
+    color: var(--color-muted);
+}
+
+#reports-list,
+#details-income,
+#details-expenses {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+#reports-list li {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+#reports-list li:last-child {
+    border-bottom: 0;
+}
+
+#reports-list li > button:first-child {
+    flex: 1;
+    color: var(--color-text);
+    text-align: left;
+    background: transparent;
+}
+
+#reports-list li > button:first-child:hover {
+    color: var(--color-primary);
+    background: var(--color-background);
+}
+
+#details-income li,
+#details-expenses li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+#income-total,
+#expense-total {
+    font-weight: 700;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+@media (max-width: 650px) {
+    main {
+        width: min(100% - 20px, 1100px);
+        padding: 24px 0;
+    }
+
+    section {
+        padding: 16px;
+    }
+
+    .line-item {
+        grid-template-columns: 1fr;
+    }
+
+    #reports-list li {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #reports-list li > button {
+        width: 100%;
+    }
+}

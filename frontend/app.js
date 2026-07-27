@@ -14,6 +14,17 @@ const expenseTotal = document.querySelector("#expense-total");
 const detailsNotes = document.querySelector("#details-notes");
 const closeDetailsButton = document.querySelector("#close-details");
 
+// Selectors
+const incomeItems = document.querySelector("#income-items");
+const expenseItems = document.querySelector("#expense-items");
+const addIncomeButton = document.querySelector("#add-income");
+const addExpenseButton = document.querySelector("#add-expense");
+const lineItemTemplate = document.querySelector(
+    "#line-item-template"
+);
+
+
+
 // Formatting functions
 const formatMoney = (amount) => {
     return new Intl.NumberFormat("en-US", {
@@ -37,7 +48,7 @@ const displayLineItems = (items, listElement, totalElement) => {
     }
 
     totalElement.textContent = `Total: ${formatMoney(total)}`;
-}
+};
 
 // Detail request async
 const showReport = async (reportId) => {
@@ -83,28 +94,43 @@ const showReport = async (reportId) => {
     }
 };
 
-function createLineItems(descriptionId, amountId) {
-    const description = document.querySelector(descriptionId).value.trim();
-    const amount = document.querySelector(amountId).value;
+const addLineItem = (container) => {
+    const templateCopy =
+        lineItemTemplate.content.cloneNode(true);
 
-    // Safety if
-    if (!description && !amount) {
-        return [];
-    }
+    const lineItem =
+        templateCopy.querySelector(".line-item");
 
-    if (!description || !amount) {
-        throw new Error (
-            "Each financial item needs a description and amount."
-        );
-    }
+    const removeButton =
+        templateCopy.querySelector(".remove-line-item");
 
-    return [
-        {
+    removeButton.addEventListener("click", () => {
+        lineItem.remove();
+    });
+
+    container.append(templateCopy);
+};
+
+
+const collectLineItems = (container) => {
+    const rows = container.querySelectorAll(".line-item");
+
+    return Array.from(rows).map((row) => {
+        const description = row
+            .querySelector(".line-item-description")
+            .value
+            .trim();
+
+        const amount = row
+            .querySelector(".line-item-amount")
+            .value;
+
+        return {
             description,
             amount,
-        },
-    ];
-}
+        };
+    });
+};
 
 async function loadReports() {
     try {
@@ -214,15 +240,8 @@ reportForm.addEventListener("submit", async (event) => {
                 .querySelector("#period-end")
                 .value,
             
-            income: createLineItems(
-                "#income-description",
-                "#income-amount",
-            ),
-
-            expenses: createLineItems(
-                "#expense-description",
-                "#expense-amount",
-            ),
+            income: collectLineItems(incomeItems),
+            expenses: collectLineItems(expenseItems),
 
             notes:
                 document
@@ -251,6 +270,13 @@ reportForm.addEventListener("submit", async (event) => {
         const savedReport = await response.json();
 
         reportForm.reset();
+
+        incomeItems.replaceChildren();
+        expenseItems.replaceChildren();
+
+        addLineItem(incomeItems);
+        addLineItem(expenseItems);
+
         formStatus.textContent = 
             `Saved "${savedReport.title}" successfully.`;
 
@@ -260,6 +286,18 @@ reportForm.addEventListener("submit", async (event) => {
         formStatus.textContent = error.message;
     }
 });
+
+// Add income and expense
+addIncomeButton.addEventListener("click", () => {
+    addLineItem(incomeItems);
+});
+
+addExpenseButton.addEventListener("click", () => {
+    addLineItem(expenseItems);
+});
+
+addLineItem(incomeItems);
+addLineItem(expenseItems);
 
 // Close detail
 closeDetailsButton.addEventListener("click", () => {
