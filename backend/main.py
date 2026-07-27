@@ -120,6 +120,39 @@ def delete_all_reports() -> dict[str, int]:
         "deleted_count": deleted_count,
     }
 
+# Expose update to FastAPI
+# PUT to replace the complete editable report
+@app.put(
+    "/reports/{report_id}",
+    response_model=schemas.ReportRead,
+)
+def update_report(
+    report_id: int,
+    report: schemas.ReportCreate,
+) -> schemas.ReportRead:
+    was_updated = database.update_report(
+        report_id,
+        report,
+    )
+
+    # Raise code error
+    if not was_updated:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+    
+    # Update the report with get_report
+    updated_report = database.get_report(report_id)
+
+    if updated_report is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Report was udpated but could not be retrieved",
+        )
+    
+    return updated_report
+
 # Keep this catch-all mount after every API route.
 app.mount(
     "/",
