@@ -204,6 +204,54 @@ def get_report(report_id: int) -> schemas.ReportRead | None:
             created_at=report_row["created_at"],
         )
 
+def update_report(
+        report_id: int,
+        report: schemas.ReportCreate,
+) -> bool:
+    # Update an existing report and replace its line items
+
+    # Open the table
+    with connection_scope() as connection:
+        cursor = connection.execute(
+            """
+            UPDATE reports
+            SET
+                title = ?,
+                reporting_period_start = ?,
+                reporting_period_end = ?,
+                notes = ?
+            WHERE id = ?
+            """,
+            (
+                report.title,
+                report.reporting_period_start.isoformat(),
+                report.reporting_period_end.isoformat(),
+                report.notes,
+                report_id,
+            ),
+        )
+
+        # If the rowcount is 0 return false
+        if cursor.rowcount == 0:
+            return False
+
+        connection.execute(
+            """
+            DELETE FROM line_items
+            WHERE report_id = ?
+            """,
+            (report_id,),
+        )
+
+        # Run insert line items to add more
+        _insert_line_items(
+            connection,
+            report_id,
+            report,
+        )
+
+        # Report existed and was updated
+        return True
 
 def list_reports() -> list[schemas.ReportSummary]:
     """Return lightweight summaries ordered newest first."""
