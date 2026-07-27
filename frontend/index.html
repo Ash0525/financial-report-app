@@ -56,43 +56,21 @@
                 <fieldset>
                     <legend>Income</legend>
 
-                    <label for="income-description">Description</label>
-                    <input
-                        id="income-description"
-                        name="income_description"
-                        type="text"
-                        maxlength="200"
-                    >
+                    <div id="income-items"></div>
 
-                    <label for="income-amount">Amount</label>
-                    <input
-                        id="income-amount"
-                        name="income_amount"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                    >
+                    <button id="add-income" type="button">
+                        Add income
+                    </button>
                 </fieldset>
 
                 <fieldset>
                     <legend>Expenses</legend>
 
-                    <label for="expense-description">Description</label>
-                    <input
-                        id="expense-description"
-                        name="expense_description"
-                        type="text"
-                        maxlength="200"
-                    >
+                    <div id="expense-items"></div>
 
-                    <label for="expense-amount">Amount</label>
-                    <input
-                        id="expense-amount"
-                        name="expense_amount"
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                    >
+                    <button id="add-expense" type="button">
+                        Add expense
+                    </button>
                 </fieldset>
 
                 <div>
@@ -107,6 +85,38 @@
                 <button type="submit">Save report</button>
                 <p id="form-status" role="status"></p>
             </form>
+
+            <template id="line-item-template">
+                <div class="line-item">
+                    <label>
+                        Description
+                        <input
+                            class="line-item-description"
+                            type="text"
+                            maxlength="200"
+                            required
+                        >
+                    </label>
+
+                    <label>
+                        Amount
+                        <input
+                            class="line-item-amount"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            required
+                        >
+                    </label>
+
+                    <button
+                        class="remove-line-item"
+                        type="button"
+                    >
+                        Remove
+                    </button>
+                </div>
+            </template>
         </section>
 
         <!-- Add details -->
