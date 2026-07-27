@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial App</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <main>
+        <h1>Financial Reports</h1>
+        <p>Your frontend is connected.</p>
+
+        <section aria-labelledby="reports-heading">
+            <h2 id="reports-heading"> Saved reports</h2>
+            <p id="reports-status">Loading reports...</p>
+            <ul id="reports-list"></ul>
+        </section>
+
+        <section aria-labelledby="create-report-heading">
+            <h2 id="create-report-heading">Create a report</h2>
+
+            <form id="report-form">
+                <div>
+                    <label for="report-title">Title</label>
+                    <input
+                        id="report-title"
+                        name="title"
+                        type="text"
+                        maxlength="200"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="period-start">Start date</label>
+                    <input
+                        id="period-start"
+                        name="reporting-period_start"
+                        type="date"
+                        required
+                    >
+                </div>
+
+                <div>
+                    <label for="period-end">End date</label>
+                    <input
+                        id="period-end"
+                        name="reporting_period_end"
+                        type="date"
+                        required
+                    >
+                </div>
+
+                <fieldset>
+                    <legend>Income</legend>
+
+                    <label for="income-description">Description</label>
+                    <input
+                        id="income-description"
+                        name="income_description"
+                        type="text"
+                        maxlength="200"
+                    >
+
+                    <label for="income-amount">Amount</label>
+                    <input
+                        id="income-amount"
+                        name="income_amount"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                    >
+                </fieldset>
+
+                <fieldset>
+                    <legend>Expenses</legend>
+
+                    <label for="expense-description">Description</label>
+                    <input
+                        id="expense-description"
+                        name="expense_description"
+                        type="text"
+                        maxlength="200"
+                    >
+
+                    <label for="expense-amount">Amount</label>
+                    <input
+                        id="expense-amount"
+                        name="expense_amount"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                    >
+                </fieldset>
+
+                <div>
+                    <label for="report-notes">Notes</label>
+                    <textarea
+                        id="report-notes"
+                        name="notes"
+                        rows="4"
+                    ></textarea>
+                </div>
+
+                <button type="submit">Save report</button>
+                <p id="form-status" role="status"></p>
+            </form>
+        </section>
+    </main>
+
+    <script src="/app.js?v=2"></script>
+</body>
+</html>

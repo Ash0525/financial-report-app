@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, StaticFiles
+
+from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 
 from . import database, schemas
 
@@ -79,7 +81,7 @@ def delete_report(report_id: int) -> None:
             detail="Report not found",
         )
 
-# Route every API rout
+# Route every API route
 app.mount(
     "/",
     StaticFiles(
