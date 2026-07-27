@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from fastapi.responses import Response
+from .services import pdf_generator
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 
@@ -90,3 +92,29 @@ app.mount(
     ),
     name="frontend",
 )
+
+# Expose endpoint to expose PDF
+@app.get(
+    "/reports/{report_id}/pdf",
+    response_class=Response, 
+)
+def download_report_pdf(report_id: int) -> Response:
+    report = database.get_report(report_id)
+
+    if report is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Report not found",
+        )
+
+    pdf_bytes = pdf_generator.generate_report_pdf(report)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="report-{report_id}.pdf"'
+            )
+        },
+    )
