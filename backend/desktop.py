@@ -1,18 +1,30 @@
 import threading
 import time
 import urllib.request
-
+import socket
 import uvicorn
 import webview
 
 from backend.main import app
 
+# Make a flexible port
+def find_available_port() -> int:
+    # Ask macOS to select an available local network port
+
+    # Create temporary local network socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as port_socket:
+
+        # Port zero tells macOS to select an available port
+        port_socket.bind((HOST, 0))
+
+        # Selected port is second item in address
+        return port_socket.getsockname()[1]
 
 # Restrict server to this computer
 HOST = "127.0.0.1"
 
 # Identifies where the local server listens
-PORT = 8000
+PORT = find_available_port()
 
 # Address displayed inside the desktop window
 APP_URL = f"http://{HOST}:{PORT}"
@@ -26,6 +38,7 @@ SERVER = uvicorn.Server(
         log_level="info",
     )
 )
+
 
 # Run FastAPI
 def run_server() -> None:
