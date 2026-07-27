@@ -140,8 +140,21 @@
                         maxlength="5000"
                     ></textarea>
                 </div>
+                
+                <!-- Div element with submit and cancel edit buttons -->
+                <div class="form-actions">
 
-                <button type="submit">Save report</button>
+                    <!-- Submit report-->
+                    <button id="submit-report" type="submit">
+                        Save report
+                    </button>
+                    
+                    <!-- Cancel edit -->
+                    <button id="cancel-edit" type="button" hidden>
+                        Cancel editing
+                    </button>
+                </div>
+
                 <p id="form-status" role="status" aria-live="polite"></p>
             </form>
 
@@ -199,7 +212,15 @@
             <p id="details-notes"></p>
 
             <div class="details-actions">
+                <!-- Edit report button -->
+                <button id="edit-report" type="button">
+                    Edit report
+                </button>
+
+                <!-- Download pdf button -->
                 <a id="download-pdf" href="#">Download PDF</a>
+
+                <!-- Close button -->
                 <button id="close-details" type="button">
                     Close details
                 </button>
