@@ -91,26 +91,31 @@ def main() -> None:
     # Start server
     server_thread.start()
 
-    # Wait for server
-    wait_for_server()
+    try:
+        # Wait for server
+        wait_for_server()
 
-    # Create native desktop window
-    window = webview.create_window(
-        title="Financial Report App",
-        url=APP_URL,
-        width=1200,
-        height=800,
-        min_size=(900, 600),
-    )
+        # Create native desktop window
+        window = webview.create_window(
+            title="Financial Report App",
+            url=APP_URL,
+            width=1200,
+            height=800,
+            min_size=(900, 600),
+        )
 
-    # Ask Uvicorn to shutdown when window closes
-    window.events.closed += stop_server
+        # Ask Uvicorn to shutdown when window closes
+        window.events.closed += stop_server
 
-    # Start the native macOS window loop
-    webview.start()
+        # Start the native macOS window loop
+        webview.start()
 
-    # Wait to finish shutdown
-    server_thread.join(timeout=5.0)
+    finally:
+        # Always runs even if startup raises an error
+        stop_server()
+
+        # Wait to finish shutdown
+        server_thread.join(timeout=5.0)
 
 
 if __name__ == "__main__":
