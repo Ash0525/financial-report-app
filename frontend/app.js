@@ -3,6 +3,86 @@ const reportsStatus = document.querySelector("#reports-status");
 const reportForm = document.querySelector("#report-form");
 const formStatus = document.querySelector("#form-status");
 
+// Detail descriptions
+const reportDetails = document.querySelector("#report-details");
+const detailsTitle = document.querySelector("#details-title");
+const detailsPeriod = document.querySelector("#details-period");
+const detailsIncome = document.querySelector("#details-income");
+const detailsExpenses = document.querySelector("#details-expenses");
+const incomeTotal = document.querySelector("#income-total");
+const expenseTotal = document.querySelector("#expense-total");
+const detailsNotes = document.querySelector("#details-notes");
+const closeDetailsButton = document.querySelector("#close-details");
+
+// Formatting functions
+const formatMoney = (amount) => {
+    return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+    }).format(Number(amount));
+};
+
+const displayLineItems = (items, listElement, totalElement) => {
+    listElement.replaceChildren();
+
+    let total = 0;
+
+    for (const item of items) {
+        const listItem = document.createElement("li");
+
+        listItem.textContent = `${item.description}: ${formatMoney(item.amount)}`;
+
+        listElement.append(listItem);
+        total += Number(item.amount);
+    }
+
+    totalElement.textContent = `Total: ${formatMoney(total)}`;
+}
+
+// Detail request async
+const showReport = async (reportId) => {
+    reportsStatus.textContent = "Loading report details...";
+
+    try {
+        const response = await fetch(`/reports/${reportId}`);
+
+        if (!response.ok) {
+            throw new Error(
+                `Unable to load report: ${response.status}`
+            );
+        }
+
+        const report = await response.json();
+
+        detailsTitle.textContent = report.title;
+        detailsPeriod.textContent =
+            `${report.reporting_period_start} to ` +
+            `${report.reporting_period_end}`;
+
+        displayLineItems(
+            report.income,
+            detailsIncome,
+            incomeTotal,
+        );
+
+        displayLineItems(
+            report.expenses,
+            detailsExpenses,
+            expenseTotal,
+        );
+
+        detailsNotes.textContent = 
+            report.notes || "No notes provided.";
+
+        reportDetails.hidden = false;
+        reportsStatus.textContent = "";
+
+    } catch (error) {
+        console.error(error);
+        reportsStatus.textContent = error.message;
+    }
+};
+
 function createLineItems(descriptionId, amountId) {
     const description = document.querySelector(descriptionId).value.trim();
     const amount = document.querySelector(amountId).value;
@@ -28,8 +108,10 @@ function createLineItems(descriptionId, amountId) {
 
 async function loadReports() {
     try {
+        // Await reports
         const response = await fetch("/reports");
 
+        // If the reponse is not ok
         if (!response.ok) {
             throw new Error(`Request failed: ${response.status}`);
         }
@@ -47,13 +129,22 @@ async function loadReports() {
 
         // For every report in the list of report
         for (const report of reports) {
+
+            // Make list variable
             const listItem = document.createElement("li");
 
-            const reportText = document.createElement("span");
-            reportText.textContent =
+            const viewButton = document.createElement("button");
+            viewButton.type = "button";
+
+            viewButton.textContent =
                 `${report.title}: ` +
                 `${report.reporting_period_start} to ` +
                 `${report.reporting_period_end}`;
+
+            // If view button clicked, show report id
+            viewButton.addEventListener("click", () => {
+                showReport(report.id);
+            });
 
             const deleteButton = document.createElement("button");
             deleteButton.type = "button";
@@ -94,7 +185,7 @@ async function loadReports() {
                 }
             });
 
-            listItem.append(reportText, " ", deleteButton);
+            listItem.append(viewButton, " ", deleteButton);
             reportsList.append(listItem);
         }
     } catch (error) {
@@ -168,6 +259,11 @@ reportForm.addEventListener("submit", async (event) => {
         console.error(error);
         formStatus.textContent = error.message;
     }
+});
+
+// Close detail
+closeDetailsButton.addEventListener("click", () => {
+    reportDetails.hidden = true;
 });
 
 // Call async function
