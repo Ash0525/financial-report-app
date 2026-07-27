@@ -31,6 +31,12 @@ const addIncomeButton = document.querySelector("#add-income");
 const addExpenseButton = document.querySelector("#add-expense");
 const lineItemTemplate = document.querySelector("#line-item-template");
 const downloadPdfLink = document.querySelector("#download-pdf");
+const createReportHeading = document.querySelector(
+    "#create-report-heading",
+);
+const submitReportButton = document.querySelector("#submit-report");
+const cancelEditButton = document.querySelector("#cancel-edit");
+const editReportButton = document.querySelector("#edit-report");
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -38,6 +44,8 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
 });
 
 let selectedReportId = null;
+let selectedReport = null;
+let editingReportId = null;
 let reportCount = 0;
 
 const formatMoney = (amount) => currencyFormatter.format(Number(amount));
@@ -114,6 +122,7 @@ const showReport = async (reportId) => {
         }
 
         const report = await response.json();
+        selectedReport = report;
         selectedReportId = report.id;
 
         detailsTitle.textContent = report.title;
@@ -157,7 +166,7 @@ const showReport = async (reportId) => {
     }
 };
 
-const addLineItem = (container) => {
+const addLineItem = (container, item = null) => {
     const templateCopy =
         lineItemTemplate.content.cloneNode(true);
 
@@ -171,7 +180,37 @@ const addLineItem = (container) => {
         lineItem.remove();
     });
 
+    // Code for executing the edit button
+    if (item !== null) {
+        const descriptionInput = templateCopy.querySelector(
+            ".line-item-description",
+        );
+        const amountInput = templateCopy.querySelector(
+            ".line-item-amount",
+        );
+
+        descriptionInput.value = item.description;
+        amountInput.value = item.amount;
+    }
     container.append(templateCopy);
+};
+
+// Reset helper
+const resetReportForm = () => {
+    editingReportId = null;
+    reportForm.reset();
+
+    // Replace income and expense items with updated
+    incomeItems.replaceChildren();
+    expenseItems.replaceChildren();
+
+    // Add to income and expense items
+    addLineItem(incomeItems);
+    addLineItem(expenseItems);
+
+    createReportHeading.textContent = "Create a report";
+    submitReportButton.textContent = "Save report";
+    cancelEditButton.hidden = true;
 };
 
 const collectLineItems = (container) => {
@@ -301,7 +340,6 @@ async function loadReports() {
 
 reportForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    formStatus.textContent = "Saving report…";
 
     try {
         const reportData = {
@@ -313,8 +351,19 @@ reportForm.addEventListener("submit", async (event) => {
             notes: reportNotesInput.value.trim() || null,
         };
 
-        const response = await fetch("/reports", {
-            method: "POST",
+        // Switch between PUT and POST
+        const isEditing = editingReportId !== null;
+        const requestUrl = isEditing
+            ? `/reports/${editingReportId}`
+            : "/reports";
+        const requestMethod = isEditing ? "PUT" : "POST";
+
+        formStatus.textContent = isEditing
+            ? "Updating report…"
+            : "Saving report…";
+
+        const response = await fetch(requestUrl, {
+            method: requestMethod,
             headers: {
                 "Content-Type": "application/json",
             },
@@ -324,25 +373,21 @@ reportForm.addEventListener("submit", async (event) => {
         if (!response.ok) {
             const message = await getResponseError(
                 response,
-                "Unable to save report",
+                isEditing
+                    ? "Unable to update report"
+                    : "Unable to save report",
             );
             throw new Error(message);
         }
 
         const savedReport = await response.json();
 
-        reportForm.reset();
-
-        incomeItems.replaceChildren();
-        expenseItems.replaceChildren();
-
-        addLineItem(incomeItems);
-        addLineItem(expenseItems);
-
-        formStatus.textContent =
-            `Saved “${savedReport.title}” successfully.`;
-
+        resetReportForm();
+        formStatus.textContent = isEditing
+            ? `Updated “${savedReport.title}” successfully.`
+            : `Saved “${savedReport.title}” successfully.`;
         await loadReports();
+        await showReport(savedReport.id);
     } catch (error) {
         console.error(error);
         formStatus.textContent =
@@ -360,8 +405,7 @@ addExpenseButton.addEventListener("click", () => {
     addLineItem(expenseItems);
 });
 
-addLineItem(incomeItems);
-addLineItem(expenseItems);
+resetReportForm();
 
 openReportsButton.addEventListener("click", () => {
     openReportsPanel();
@@ -373,6 +417,62 @@ closeReportsButton.addEventListener("click", () => {
 
 reportsBackdrop.addEventListener("click", () => {
     closeReportsPanel();
+});
+
+// Edit report button listener
+editReportButton.addEventListener("click", () => {
+    if (selectedReport === null) {
+        return;
+    }
+
+    editingReportId = selectedReport.id;
+
+    reportTitleInput.value = selectedReport.title;
+    periodStartInput.value = selectedReport.reporting_period_start;
+    periodEndInput.value = selectedReport.reporting_period_end;
+
+    // If no notes are add, put no string
+    reportNotesInput.value = selectedReport.notes || "";
+
+    incomeItems.replaceChildren();
+    expenseItems.replaceChildren();
+
+    // Add line to income
+    for (const item of selectedReport.income) {
+        addLineItem(incomeItems, item);
+    }
+
+    // Add line to expense
+    for (const item of selectedReport.expenses) {
+        addLineItem(expenseItems, item);
+    }
+
+    // If the length is equal to 0
+    if (selectedReport.income.length === 0) {
+        addLineItem(incomeItems);
+    }
+
+    if (selectedReport.expenses.length === 0) {
+        addLineItem(expenseItems);
+    }
+
+    createReportHeading.textContent =
+        `Edit “${selectedReport.title}”`;
+    submitReportButton.textContent = "Update report";
+    cancelEditButton.hidden = false;
+    reportDetails.hidden = true;
+    formStatus.textContent = "Editing saved report.";
+
+    reportForm.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+    });
+});
+
+// Cancel button listener
+cancelEditButton.addEventListener("click", () => {
+    resetReportForm();
+    formStatus.textContent = "Editing canceled.";
 });
 
 deleteAllReportsButton.addEventListener(
