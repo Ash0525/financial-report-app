@@ -66,6 +66,47 @@ def initialize_database() -> None:
             """
         )
 
+# Internal database helper
+def _insert_line_items(
+        connection: sqlite3.Connection,
+        report_id: int,
+        report: schemas.ReportCreate 
+) -> None:
+    line_items = [
+        (
+            report_id,
+            "income",
+            item.description,
+            str(item.amount),
+        )
+        for item in report.income
+    ]
+
+    line_items.extend(
+        (
+            report_id,
+            "expense",
+            item.description,
+            str(item.amount),
+        )
+        for item in report.expenses
+    )
+
+    if not line_items:
+        return
+
+    connection.executemany(
+        """
+        INSERT INTO line_items (
+            report_id,
+            item_type,
+            description,
+            amount
+        )
+        VALUES (?, ?, ?, ?)
+        """,
+        line_items,
+    )
 
 def create_report(report: schemas.ReportCreate) -> int:
     """Persist a report and all line items in one transaction."""
@@ -93,40 +134,12 @@ def create_report(report: schemas.ReportCreate) -> int:
 
         if report_id is None:
             raise RuntimeError("Database did not return a report ID")
-
-        line_items = [
-            (
-                report_id,
-                "income",
-                item.description,
-                str(item.amount),
-            )
-            for item in report.income
-        ]
-
-        line_items.extend(
-            (
-                report_id,
-                "expense",
-                item.description,
-                str(item.amount),
-            )
-            for item in report.expenses
+        
+        _insert_line_items(
+            connection,
+            report_id,
+            report,
         )
-
-        if line_items:
-            connection.executemany(
-                """
-                INSERT INTO line_items (
-                    report_id,
-                    item_type,
-                    description,
-                    amount
-                )
-                VALUES (?, ?, ?, ?)
-                """,
-                line_items,
-            )
 
         return report_id
 
