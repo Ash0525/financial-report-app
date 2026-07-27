@@ -17,16 +17,27 @@ PORT = 8000
 # Address displayed inside the desktop window
 APP_URL = f"http://{HOST}:{PORT}"
 
-
-# Run FastAPI
-def run_server() -> None:
-    # Run FastAPI locally for desktop application
-    uvicorn.run(
-        app,
+# Configure a controllable Uvicorn server
+SERVER = uvicorn.Server(
+    uvicorn.Config(
+        app=app,
         host=HOST,
         port=PORT,
         log_level="info",
     )
+)
+
+# Run FastAPI
+def run_server() -> None:
+    # Run FastAPI in the background
+
+    SERVER.run()
+
+# Stop server
+def stop_server() -> None:
+    # Request graceful shutdown
+
+    SERVER.should_exit = True
 
 # Wait for server, 10 second deadline, default
 def wait_for_server(
@@ -71,7 +82,7 @@ def main() -> None:
     wait_for_server()
 
     # Create native desktop window
-    webview.create_window(
+    window = webview.create_window(
         title="Financial Report App",
         url=APP_URL,
         width=1200,
@@ -79,8 +90,14 @@ def main() -> None:
         min_size=(900, 600),
     )
 
+    # Ask Uvicorn to shutdown when window closes
+    window.events.closed += stop_server
+
     # Start the native macOS window loop
     webview.start()
+
+    # Wait to finish shutdown
+    server_thread.join(timeout=5.0)
 
 
 if __name__ == "__main__":
