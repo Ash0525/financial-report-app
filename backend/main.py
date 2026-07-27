@@ -17,6 +17,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Initialize persistent resources before accepting requests."""
 
     database.initialize_database()
+    database.create_database_backup()
     yield
 
 

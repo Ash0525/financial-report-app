@@ -1,16 +1,38 @@
 import sqlite3
+from datetime import datetime, timezone
 from contextlib import contextmanager
 from pathlib import Path
+from shutil import copy2
 from typing import Iterator
 
-from . import schemas
+from . import schemas, storage
 
-DATABASE_PATH = Path(__file__).with_name("reports.db")
+LEGACY_DATABASE_PATH = Path(__file__).with_name("reports.db")
+DEFAULT_DATABASE_PATH = (
+    storage.get_application_data_directory() / "reports.db"
+)
+DATABASE_PATH = DEFAULT_DATABASE_PATH
+DEFAULT_BACKUP_RETENTION = 10
+
+
+def prepare_database_storage() -> None:
+    """Create the data directory and migrate the old database when needed."""
+
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    using_default_path = DATABASE_PATH == DEFAULT_DATABASE_PATH
+    if (
+        using_default_path
+        and not DATABASE_PATH.exists()
+        and LEGACY_DATABASE_PATH.exists()
+    ):
+        copy2(LEGACY_DATABASE_PATH, DATABASE_PATH)
 
 
 def get_connection() -> sqlite3.Connection:
     """Open and configure a connection to the application database."""
 
+    prepare_database_storage()
     connection = sqlite3.connect(DATABASE_PATH)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
@@ -45,7 +67,6 @@ def initialize_database() -> None:
             )
             """
         )
-
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS line_items (
@@ -65,6 +86,44 @@ def initialize_database() -> None:
             ON line_items (report_id)
             """
         )
+
+
+def create_database_backup(
+    backup_directory: Path | None = None,
+    retention: int = DEFAULT_BACKUP_RETENTION,
+) -> Path:
+    """Create a consistent SQLite backup and retain the newest backups."""
+
+    if retention < 1:
+        raise ValueError("Backup retention must be at least 1")
+
+    prepare_database_storage()
+    destination_directory = backup_directory or (
+        DATABASE_PATH.parent / "backups"
+    )
+    destination_directory.mkdir(parents=True, exist_ok=True)
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    backup_path = destination_directory / f"reports-{timestamp}.db"
+
+    source_connection = get_connection()
+    backup_connection = sqlite3.connect(backup_path)
+    try:
+        source_connection.backup(backup_connection)
+    finally:
+        backup_connection.close()
+        source_connection.close()
+
+    backup_paths = sorted(
+        destination_directory.glob("reports-*.db"),
+        key=lambda path: path.name,
+        reverse=True,
+    )
+    for expired_backup in backup_paths[retention:]:
+        expired_backup.unlink()
+
+    return backup_path
+
 
 # Internal database helper
 def _insert_line_items(
