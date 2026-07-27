@@ -1,33 +1,36 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncIterator
 
-from fastapi.responses import Response
-from .services import pdf_generator
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
 from . import database, schemas
+from .services import pdf_generator
 
-FRONTEND_DIRECTORY = (
-    Path(__file__).resolve().parent.parent / "frontend"
-)
+FRONTEND_DIRECTORY = Path(__file__).resolve().parent.parent / "frontend"
+
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Initialize persistent resources before accepting requests."""
+
     database.initialize_database()
     yield
+
 
 app = FastAPI(
     title="Financial Report API",
     lifespan=lifespan,
 )
 
-# Registers the function below it as handler for HTTP GET request
+
 @app.get("/health")
-def health_check():
+def health_check() -> dict[str, str]:
     return {"status": "ok"}
 
-# Decorator that reports endpoint
+
 @app.post(
     "/reports",
     response_model=schemas.ReportRead,
@@ -42,10 +45,10 @@ def create_report(report: schemas.ReportCreate) -> schemas.ReportRead:
             status_code=500,
             detail="Report was saved but could not be retrieved",
         )
-    
+
     return saved_report
 
-# Decorator to get reports
+
 @app.get(
     "/reports",
     response_model=list[schemas.ReportSummary],
@@ -53,7 +56,7 @@ def create_report(report: schemas.ReportCreate) -> schemas.ReportRead:
 def list_reports() -> list[schemas.ReportSummary]:
     return database.list_reports()
 
-# Decorator to get report id
+
 @app.get(
     "/reports/{report_id}",
     response_model=schemas.ReportRead,
@@ -66,10 +69,10 @@ def get_report(report_id: int) -> schemas.ReportRead:
             status_code=404,
             detail="Report not found",
         )
-    
+
     return report
 
-# Decorator to delete through API
+
 @app.delete(
     "/reports/{report_id}",
     status_code=204,
@@ -83,20 +86,10 @@ def delete_report(report_id: int) -> None:
             detail="Report not found",
         )
 
-# Route every API route
-app.mount(
-    "/",
-    StaticFiles(
-        directory=FRONTEND_DIRECTORY,
-        html=True,
-    ),
-    name="frontend",
-)
 
-# Expose endpoint to expose PDF
 @app.get(
     "/reports/{report_id}/pdf",
-    response_class=Response, 
+    response_class=Response,
 )
 def download_report_pdf(report_id: int) -> Response:
     report = database.get_report(report_id)
@@ -115,6 +108,24 @@ def download_report_pdf(report_id: int) -> Response:
         headers={
             "Content-Disposition": (
                 f'attachment; filename="report-{report_id}.pdf"'
-            )
+            ),
         },
     )
+
+@app.delete("/reports")
+def delete_all_reports() -> dict[str, int]:
+    deleted_count = database.delete_all_reports()
+
+    return {
+        "deleted_count": deleted_count,
+    }
+
+# Keep this catch-all mount after every API route.
+app.mount(
+    "/",
+    StaticFiles(
+        directory=FRONTEND_DIRECTORY,
+        html=True,
+    ),
+    name="frontend",
+)

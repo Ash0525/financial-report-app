@@ -63,6 +63,20 @@ class ReportApiTests(unittest.TestCase):
         self.assertEqual(list_response.status_code, 200)
         self.assertEqual(len(list_response.json()), 1)
 
+        pdf_response = self.client.get(
+            f"/reports/{report_id}/pdf"
+        )
+        self.assertEqual(pdf_response.status_code, 200)
+        self.assertEqual(
+            pdf_response.headers["content-type"],
+            "application/pdf",
+        )
+        self.assertEqual(
+            pdf_response.headers["content-disposition"],
+            f'attachment; filename="report-{report_id}.pdf"',
+        )
+        self.assertTrue(pdf_response.content.startswith(b"%PDF"))
+
         delete_response = self.client.delete(
             f"/reports/{report_id}"
         )
@@ -72,6 +86,23 @@ class ReportApiTests(unittest.TestCase):
             f"/reports/{report_id}"
         )
         self.assertEqual(missing_response.status_code, 404)
+
+    def test_rejects_invalid_report(self):
+        response = self.client.post(
+            "/reports",
+            json={
+                "title": "Invalid dates",
+                "reporting_period_start": "2026-07-31",
+                "reporting_period_end": "2026-07-01",
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
+
+    def test_pdf_returns_not_found_for_unknown_report(self):
+        response = self.client.get("/reports/999999/pdf")
+
+        self.assertEqual(response.status_code, 404)
 
 
 if __name__ == "__main__":

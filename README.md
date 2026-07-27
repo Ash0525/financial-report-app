@@ -1,44 +1,65 @@
-# financial-report-app
+# Financial Report App
 
-App for storing financials and for financial responsibility
+A small full-stack application for creating financial reports, storing income
+and expense line items in SQLite, and exporting reports as PDFs.
 
-## Run the backend
+## Features
 
-Activate the project's virtual environment and run the backend:
+- Create reports with multiple income and expense entries.
+- Validate money values and reporting periods.
+- List, inspect, and delete saved reports.
+- Calculate income, expense, and net totals.
+- Export complete reports as PDF files.
+- Exercise the database, API, validation, and PDF layers with isolated tests.
+
+## Setup
+
+Create and activate a virtual environment:
 
 ```bash
+python3 -m venv .venv
 source .venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+## Run
+
+Start the development server from the repository root:
+
+```bash
 python -m uvicorn backend.main:app --reload
 ```
 
-Run all automated tests from the project root:
+Open the application at <http://127.0.0.1:8000>. Interactive API
+documentation is available at <http://127.0.0.1:8000/docs>.
+
+## Test
+
+Run the complete test suite:
 
 ```bash
-python -m unittest discover -s backend/tests
+python -m unittest discover -s backend/tests -v
 ```
 
-schemas.py - financial report schema
-database.py - create and initialize the SQLite tables
-main.py - API functions to create, retrieve, and list reports
+Tests use temporary SQLite databases and do not modify `backend/reports.db`.
 
-July 26, 2026
+## Structure
 
-get_connection() - establishes a connection to sqlite3
-
-initialize_database() - initialize the database. report_id: connects each line item to its report. item_type: says whether it is income or an expense. CHECK: prevents invalid values like "other". 
-
-LineItem object - has a description (str) and an amount (Decimal)
-
-create_report() - creates the report with title, start period, end period, and notes. Inserts line_items to table. Includes income and expense.
-
-Create test_database.py for testing the database
-
-setUp() - creates temporary database and initalize tables
-
-test - save report, retrieve report, and compare values
-
-tearDown() - restore real database path and delete temporary database
-
-Start the server with: python -m uvicorn backend.main:app --reload
-
-Go to this website: http://127.0.0.1:8000/health
+```text
+backend/
+├── database.py              SQLite persistence
+├── main.py                  FastAPI routes and frontend hosting
+├── schemas.py               Pydantic input and output models
+├── services/
+│   └── pdf_generator.py     PDF rendering
+└── tests/                   Automated tests
+frontend/
+├── index.html               Page structure
+├── app.js                   Browser behavior and API requests
+└── style.css                Responsive presentation
+```

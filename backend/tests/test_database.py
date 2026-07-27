@@ -59,6 +59,32 @@ class DatabaseTests(unittest.TestCase):
 
         self.assertIsNone(saved_report)
 
+    def test_delete_report_cascades_to_line_items(self):
+        report = ReportCreate(
+            title="Report to delete",
+            reporting_period_start="2026-07-01",
+            reporting_period_end="2026-07-31",
+            income=[
+                {"description": "Salary", "amount": "3000.00"},
+            ],
+        )
+        report_id = database.create_report(report)
+
+        self.assertTrue(database.delete_report(report_id))
+        self.assertIsNone(database.get_report(report_id))
+
+        with database.connection_scope() as connection:
+            item_count = connection.execute(
+                """
+                SELECT COUNT(*)
+                FROM line_items
+                WHERE report_id = ?
+                """,
+                (report_id,),
+            ).fetchone()[0]
+
+        self.assertEqual(item_count, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,27 +1,34 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, StringConstraints, model_validator
+
+ShortText = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=200),
+]
 
 
-# For a journal entry
 class LineItem(BaseModel):
-    description: str = Field(min_length=1, max_length=200)
+    """A single income or expense entry."""
+
+    description: ShortText
     amount: Decimal = Field(gt=0, decimal_places=2)
 
 
-# Everything a user must submit
 class ReportCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=200)
+    """Validated input required to create a financial report."""
+
+    title: ShortText
     reporting_period_start: date
     reporting_period_end: date
     income: list[LineItem] = Field(default_factory=list)
     expenses: list[LineItem] = Field(default_factory=list)
-    notes: str | None = None
+    notes: str | None = Field(default=None, max_length=5_000)
 
     @model_validator(mode="after")
-    def validate_reporting_period(self):
-        # Data check 
+    def validate_reporting_period(self) -> "ReportCreate":
         if self.reporting_period_end < self.reporting_period_start:
             raise ValueError(
                 "Reporting period end date cannot be before the start date"
@@ -30,19 +37,18 @@ class ReportCreate(BaseModel):
         return self
 
 
-# Object for reading the report
 class ReportRead(ReportCreate):
-    # ID is an integer
-    id: int
+    """A complete report returned from persistent storage."""
 
-    # Get the date time
+    id: int
     created_at: datetime
 
+
 class ReportSummary(BaseModel):
+    """The lightweight report representation used in list views."""
+
     id: int
     title: str
     reporting_period_start: date
     reporting_period_end: date
     created_at: datetime
-
-
