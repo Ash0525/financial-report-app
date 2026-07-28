@@ -9,6 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from . import database, schemas
 from .services import pdf_generator
 
+from .version import APP_VERSION
+
 FRONTEND_DIRECTORY = Path(__file__).resolve().parent.parent / "frontend"
 
 
@@ -23,6 +25,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="Financial Report API",
+    version=APP_VERSION,
     lifespan=lifespan,
 )
 

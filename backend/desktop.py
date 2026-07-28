@@ -1,73 +1,62 @@
+import socket
 import threading
 import time
 import urllib.request
-import socket
+
 import uvicorn
 import webview
 
 from backend.main import app
 
-# Make a flexible port
-def find_available_port() -> int:
-    # Ask macOS to select an available local network port
+# Restrict the server to this computer.
+HOST = "127.0.0.1"
+
+
+def find_available_port(host: str = HOST) -> int:
+    """Ask the operating system to select an available local port."""
 
     # Create temporary local network socket
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as port_socket:
-
         # Port zero tells macOS to select an available port
-        port_socket.bind((HOST, 0))
+        port_socket.bind((host, 0))
 
         # Selected port is second item in address
         return port_socket.getsockname()[1]
 
-# Restrict server to this computer
-HOST = "127.0.0.1"
 
-# Identifies where the local server listens
-PORT = find_available_port()
+def run_server(server: uvicorn.Server) -> None:
+    """Run FastAPI in the background."""
 
-# Address displayed inside the desktop window
-APP_URL = f"http://{HOST}:{PORT}"
-
-# Configure a controllable Uvicorn server
-SERVER = uvicorn.Server(
-    uvicorn.Config(
-        app=app,
-        host=HOST,
-        port=PORT,
-        log_level="info",
-    )
-)
+    server.run()
 
 
-# Run FastAPI
-def run_server() -> None:
-    # Run FastAPI in the background
+def stop_server(server: uvicorn.Server) -> None:
+    """Request a graceful shutdown of the local server."""
 
-    SERVER.run()
+    server.should_exit = True
 
-# Stop server
-def stop_server() -> None:
-    # Request graceful shutdown
 
-    SERVER.should_exit = True
+def configure_webview() -> None:
+    """Configure desktop-window behavior before creating the window."""
 
-# Wait for server, 10 second deadline, default
+    # Allow attachment responses to use macOS file downloads.
+    webview.settings["ALLOW_DOWNLOADS"] = True
+
+
 def wait_for_server(
+    app_url: str,
     timeout_seconds: float = 10.0,
 ) -> None:
-    # Wait until FastAPI is ready to receive requests.
+    """Wait until FastAPI is ready to receive requests."""
 
     deadline = time.monotonic() + timeout_seconds
 
     while time.monotonic() < deadline:
         try:
-            # Require the /health endpoint
             with urllib.request.urlopen(
-                f"{APP_URL}/health",
+                f"{app_url}/health",
                 timeout=0.5,
             ) as response:
-                # Returns when FastAPI responds
                 if response.status == 200:
                     return
 
@@ -79,11 +68,25 @@ def wait_for_server(
 
 
 def main() -> None:
-    # Start the local server and open the desktop window
+    """Start the local server and open the desktop window."""
+
+    # Resolve runtime resources only when the application is launched.
+    port = find_available_port()
+    app_url = f"http://{HOST}:{port}"
+    configure_webview()
+    server = uvicorn.Server(
+        uvicorn.Config(
+            app=app,
+            host=HOST,
+            port=port,
+            log_level="info",
+        )
+    )
 
     # Create background thread for FastAPI
     server_thread = threading.Thread(
         target=run_server,
+        args=(server,),
         daemon=True,
         name="fastapi-server",
     )
@@ -93,26 +96,26 @@ def main() -> None:
 
     try:
         # Wait for server
-        wait_for_server()
+        wait_for_server(app_url)
 
         # Create native desktop window
         window = webview.create_window(
             title="Financial Report App",
-            url=APP_URL,
+            url=app_url,
             width=1200,
             height=800,
             min_size=(900, 600),
         )
 
         # Ask Uvicorn to shutdown when window closes
-        window.events.closed += stop_server
+        window.events.closed += lambda: stop_server(server)
 
         # Start the native macOS window loop
         webview.start()
 
     finally:
         # Always runs even if startup raises an error
-        stop_server()
+        stop_server(server)
 
         # Wait to finish shutdown
         server_thread.join(timeout=5.0)

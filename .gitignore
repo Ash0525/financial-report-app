@@ -5,3 +5,10 @@ __pycache__/
 
 # Local application data
 backend/*.db
+
+# PyInstaller-generated output
+build/
+dist/
+
+# Packaged release files
+release/

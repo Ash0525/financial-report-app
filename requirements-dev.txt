@@ -1,0 +1,5 @@
+# Install all dependencies required to run the application.
+-r requirements.txt
+
+# Package the Python project as a macOS application.
+pyinstaller==6.21.0
