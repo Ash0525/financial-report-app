@@ -25,15 +25,11 @@ const expenseTotal = document.querySelector("#expense-total");
 const netBalance = document.querySelector("#net-balance");
 const detailsNotes = document.querySelector("#details-notes");
 const closeDetailsButton = document.querySelector("#close-details");
-const incomeItems = document.querySelector("#income-items");
-const expenseItems = document.querySelector("#expense-items");
-const addIncomeButton = document.querySelector("#add-income");
-const addExpenseButton = document.querySelector("#add-expense");
-const lineItemTemplate = document.querySelector("#line-item-template");
+const journalEntries = document.querySelector("#journal-entries");
+const addJournalEntryButton = document.querySelector("#add-journal-entry");
+const journalEntryTemplate = document.querySelector("#journal-entry-template");
 const downloadPdfLink = document.querySelector("#download-pdf");
-const createReportHeading = document.querySelector(
-    "#create-report-heading",
-);
+const createReportHeading = document.querySelector("#create-report-heading");
 const submitReportButton = document.querySelector("#submit-report");
 const cancelEditButton = document.querySelector("#cancel-edit");
 const editReportButton = document.querySelector("#edit-report");
@@ -166,33 +162,39 @@ const showReport = async (reportId) => {
     }
 };
 
-const addLineItem = (container, item = null) => {
+const addJournalEntry = (
+    entryType = "income",
+    item = null,
+) => {
     const templateCopy =
-        lineItemTemplate.content.cloneNode(true);
+        journalEntryTemplate.content.cloneNode(true);
+    const journalEntry = templateCopy.querySelector(".line-item");
 
-    const lineItem =
-        templateCopy.querySelector(".line-item");
+    const typeInput = templateCopy.querySelector(
+        ".journal-entry-type",
+    );
+    const descriptionInput = templateCopy.querySelector(
+        ".line-item-description",
+    );
+    const amountInput = templateCopy.querySelector(
+        ".line-item-amount",
+    );
+    const removeButton = templateCopy.querySelector(
+        ".remove-line-item",
+    );
 
-    const removeButton =
-        templateCopy.querySelector(".remove-line-item");
+    typeInput.value = entryType;
 
-    removeButton.addEventListener("click", () => {
-        lineItem.remove();
-    });
-
-    // Code for executing the edit button
     if (item !== null) {
-        const descriptionInput = templateCopy.querySelector(
-            ".line-item-description",
-        );
-        const amountInput = templateCopy.querySelector(
-            ".line-item-amount",
-        );
-
         descriptionInput.value = item.description;
         amountInput.value = item.amount;
     }
-    container.append(templateCopy);
+
+    removeButton.addEventListener("click", () => {
+        journalEntry.remove();
+    });
+
+    journalEntries.append(templateCopy);
 };
 
 // Reset helper
@@ -200,23 +202,23 @@ const resetReportForm = () => {
     editingReportId = null;
     reportForm.reset();
 
-    // Replace income and expense items with updated
-    incomeItems.replaceChildren();
-    expenseItems.replaceChildren();
-
-    // Add to income and expense items
-    addLineItem(incomeItems);
-    addLineItem(expenseItems);
+    // Replace journal entries
+    journalEntries.replaceChildren();
+    addJournalEntry();
 
     createReportHeading.textContent = "Create a report";
     submitReportButton.textContent = "Save report";
     cancelEditButton.hidden = true;
 };
 
-const collectLineItems = (container) => {
-    const rows = container.querySelectorAll(".line-item");
+const collectJournalEntries = () => {
+    const rows = journalEntries.querySelectorAll(".line-item");
 
     return Array.from(rows).map((row) => {
+        const entryType = row
+            .querySelector(".journal-entry-type")
+            .value;
+
         const description = row
             .querySelector(".line-item-description")
             .value
@@ -227,6 +229,7 @@ const collectLineItems = (container) => {
             .value;
 
         return {
+            entryType,
             description,
             amount,
         };
@@ -342,12 +345,24 @@ reportForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     try {
+        const entries = collectJournalEntries();
+
         const reportData = {
             title: reportTitleInput.value.trim(),
             reporting_period_start: periodStartInput.value,
             reporting_period_end: periodEndInput.value,
-            income: collectLineItems(incomeItems),
-            expenses: collectLineItems(expenseItems),
+            income: entries
+                .filter((entry) => entry.entryType === "income")
+                .map(({ description, amount }) => ({
+                    description,
+                    amount,
+                })),
+            expenses: entries
+                .filter((entry) => entry.entryType === "expense")
+                .map(({ description, amount }) => ({
+                    description,
+                    amount,
+                })),
             notes: reportNotesInput.value.trim() || null,
         };
 
@@ -397,12 +412,8 @@ reportForm.addEventListener("submit", async (event) => {
     }
 });
 
-addIncomeButton.addEventListener("click", () => {
-    addLineItem(incomeItems);
-});
-
-addExpenseButton.addEventListener("click", () => {
-    addLineItem(expenseItems);
+addJournalEntryButton.addEventListener("click", () => {
+    addJournalEntry();
 });
 
 resetReportForm();
@@ -434,26 +445,21 @@ editReportButton.addEventListener("click", () => {
     // If no notes are add, put no string
     reportNotesInput.value = selectedReport.notes || "";
 
-    incomeItems.replaceChildren();
-    expenseItems.replaceChildren();
+    journalEntries.replaceChildren();
 
-    // Add line to income
     for (const item of selectedReport.income) {
-        addLineItem(incomeItems, item);
+        addJournalEntry("income", item);
     }
 
-    // Add line to expense
     for (const item of selectedReport.expenses) {
-        addLineItem(expenseItems, item);
+        addJournalEntry("expense", item);
     }
 
-    // If the length is equal to 0
-    if (selectedReport.income.length === 0) {
-        addLineItem(incomeItems);
-    }
-
-    if (selectedReport.expenses.length === 0) {
-        addLineItem(expenseItems);
+    if (
+        selectedReport.income.length === 0 &&
+        selectedReport.expenses.length === 0
+    ) {
+        addJournalEntry();
     }
 
     createReportHeading.textContent =

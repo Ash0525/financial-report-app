@@ -112,22 +112,12 @@
                 </div>
 
                 <fieldset>
-                    <legend>Income</legend>
+                    <legend>Journal entries</legend>
 
-                    <div id="income-items"></div>
+                    <div id="journal-entries"></div>
 
-                    <button id="add-income" type="button">
-                        Add income
-                    </button>
-                </fieldset>
-
-                <fieldset>
-                    <legend>Expenses</legend>
-
-                    <div id="expense-items"></div>
-
-                    <button id="add-expense" type="button">
-                        Add expense
+                    <button id="add-journal-entry" type="button">
+                        Add entry
                     </button>
                 </fieldset>
 
@@ -158,9 +148,17 @@
                 <p id="form-status" role="status" aria-live="polite"></p>
             </form>
 
-            <!-- Reusable income and expense row template -->
-            <template id="line-item-template">
+            <!-- Reusable journal-entry row template -->
+            <template id="journal-entry-template">
                 <div class="line-item">
+                    <label>
+                        Entry type
+                        <select class="journal-entry-type" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </label>
+
                     <label>
                         Description
                         <input
