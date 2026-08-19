@@ -14,6 +14,13 @@ DEFAULT_DATABASE_PATH = (
 DATABASE_PATH = DEFAULT_DATABASE_PATH
 DEFAULT_BACKUP_RETENTION = 10
 
+# Define the categories (internal code, user display, display order) with tuple
+PRIMARY_CATEGORIES = (
+    ("asset", "Asset", 1),
+    ("liability", "Liability", 2),
+    ("net_worth", "Net Worth", 3),
+)
+
 
 def prepare_database_storage() -> None:
     """Create the data directory and migrate the old database when needed."""
@@ -55,6 +62,7 @@ def initialize_database() -> None:
     """Create the application tables and indexes when they do not exist."""
 
     with connection_scope() as connection:
+        # Create reports table
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS reports (
@@ -67,6 +75,30 @@ def initialize_database() -> None:
             )
             """
         )
+
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS primary_categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT NOT NULL UNIQUE,
+                name TEXT NOT NULL UNIQUE,
+                display_order INTEGER NOT NULL UNIQUE
+            )
+            """
+        )
+
+        connection.executemany(
+            """
+            INSERT OR IGNORE INTO primary_categories (
+                code,
+                name,
+                display_order
+            )
+            VALUES (?, ?, ?)
+            """,
+            PRIMARY_CATEGORIES,
+        )
+
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS line_items (
